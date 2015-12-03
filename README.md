@@ -16,6 +16,6 @@ This module works only with the latest GRASS 7.1 trunk version.
 
 3. Install the module and its manpage
 
-    cd t.rast.sample
+        cd t.rast.sample
 
-    make
+        make
