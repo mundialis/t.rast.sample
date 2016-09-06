@@ -5,9 +5,9 @@
 # MODULE:       t.rast.sample
 # AUTHOR(S):    Soeren Gebbert
 #
-# PURPOSE:      Sample a space time raster dataset at specific vector point 
+# PURPOSE:      Sample a space time raster dataset at specific vector point
 #               coordinates and write the output into a file or stdout
-#               
+#
 # COPYRIGHT:    (C) 2015 by the GRASS Development Team
 #
 #               This program is free software under the GNU General Public
@@ -66,6 +66,12 @@
 #% description: Output header row
 #%end
 
+#%flag
+#% key: r
+#% description: Use the raster region of each map for sampling
+#%end
+
+
 import grass.script as gscript
 import grass.temporal as tgis
 import grass.pygrass.vector as pyvect
@@ -122,6 +128,7 @@ def main(options, flags):
     use_cats = False
 
     write_header = flags["n"]
+    use_raster_region = flags["r"]
 
     overwrite = gscript.overwrite()
 
@@ -132,7 +139,7 @@ def main(options, flags):
     dbif.connect()
 
     sp = tgis.open_old_stds(strds, "strds", dbif)
-    maps = sp.get_registered_maps_as_objects(where=where, order=order, 
+    maps = sp.get_registered_maps_as_objects(where=where, order=order,
                                              dbif=dbif)
     dbif.close()
 
@@ -154,10 +161,10 @@ def main(options, flags):
         gscript.fatal(_("Vector map <%s> does not exist"%(points)))
 
     if not v.table:
-        use_cats == True
+        use_cats = True
         gscript.warning(_("Vector map <%s> does not have an attribute table, using cats as header column."%(points)))
 
-    if column not in v.table.columns:
+    if v.table and column not in v.table.columns:
         gscript.fatal(_("Vector map <%s> has no column named %s"%(points, column)))
 
     myp = pygeom.Point()
@@ -215,6 +222,10 @@ def main(options, flags):
         r = pyrast.RasterRow(map.get_name(), map.get_mapset())
         if r.exist() == False:
             gscript.fatal(_("Raster map <%s> does not exist"%(map.get_id())))
+
+        if use_raster_region is True:
+            r.set_region_from_rast()
+        # Open the raster layer after the region settings
         r.open("r")
 
         # Sample the raster maps
