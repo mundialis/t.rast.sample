@@ -167,9 +167,6 @@ def main(options, flags):
     if v.table and column not in v.table.columns:
         gscript.fatal(_("Vector map <%s> has no column named %s"%(points, column)))
 
-    myp = pygeom.Point()
-    myp.gtype
-
     p_list = []
     if use_cats is False:
         col_index = v.table.columns.names().index(column)
@@ -223,8 +220,9 @@ def main(options, flags):
         if r.exist() == False:
             gscript.fatal(_("Raster map <%s> does not exist"%(map.get_id())))
 
+        region = None
         if use_raster_region is True:
-            r.set_region_from_rast()
+            region = r.set_region_from_rast()
         # Open the raster layer after the region settings
         r.open("r")
 
@@ -232,7 +230,8 @@ def main(options, flags):
         count = 0
         for p in p_list:
             count += 1
-            out_file.write(str(r.get_value(p)))
+            v = r.get_value(point=p, region=region)
+            out_file.write(str(v))
             if count != len(p_list):
                 out_file.write(separator)
         out_file.write("\n")

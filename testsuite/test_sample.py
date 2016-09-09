@@ -78,6 +78,7 @@ class TestRasterSample(TestCase):
 
         :return:
         """
+        self.runModule("g.region",  s=-10,  n=0,  w=-10,  e=0,  b=0,  t=50,  res=10,  res3=10)
         self.assertModule("t.rast.sample",  points="points", strds="A", output="out.txt", flags="rn")
 
         content = """start_time|end_time|1|2|3
