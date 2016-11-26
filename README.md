@@ -12,8 +12,9 @@ This module works only with the latest GRASS 7.1 trunk version.
 
 2. Clone the repository:
 
-        git clone git clone https://huhabla@bitbucket.org/huhabla/temporal-raster-sampling.git t.rast.sample
+        git clone https://huhabla@bitbucket.org/huhabla/temporal-raster-sampling.git t.rast.sample
 
 3. Install the module and its manpage
 
-    make
+        cd t.rast.sample
+        make
