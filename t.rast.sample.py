@@ -143,7 +143,7 @@ def main(options, flags):
     vname = points
     vmapset= ""
     if "@" in points:
-        vname, vmapset = input.split("@")
+        vname, vmapset = points.split("@")
 
     v = pyvect.VectorTopo(vname, vmapset)
     v.open("r")
@@ -154,11 +154,12 @@ def main(options, flags):
         gscript.fatal(_("Vector map <%s> does not exist"%(points)))
 
     if not v.table:
-        use_cats == True
+        use_cats = True
         gscript.warning(_("Vector map <%s> does not have an attribute table, using cats as header column."%(points)))
 
-    if column not in v.table.columns:
-        gscript.fatal(_("Vector map <%s> has no column named %s"%(points, column)))
+    if v.table:
+        if column not in v.table.columns:
+            gscript.fatal(_("Vector map <%s> has no column named %s"%(points, column)))
 
     myp = pygeom.Point()
     myp.gtype
@@ -202,7 +203,11 @@ def main(options, flags):
         out_file.write("\n")
 
     # Sample the raster maps
+    num = 0
     for map in maps:
+        num += 1
+        sys.stderr.write("Sample map <%s> number  %i out of %i\n"%(map.get_name(), num, len(maps)))
+
         start, end = map.get_temporal_extent_as_tuple()
         out_file.write(str(start))
         out_file.write(separator)
