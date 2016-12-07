@@ -5,7 +5,7 @@
 # MODULE:       t.rast.sample
 # AUTHOR(S):    Soeren Gebbert
 #
-# PURPOSE:      Sample a space time raster dataset at specific vector point
+# PURPOSE:      Sample a space time raster dataset at specific point
 #               coordinates and write the output into a file or stdout
 #
 # COPYRIGHT:    (C) 2015 by the GRASS Development Team
@@ -98,6 +98,7 @@ class SamplePoint(object):
         self.y = y
         self.cat = cat
         self.column = column
+        self.value = None
     def __str__(self):
         return str(self.x) + " " + \
                str(self.y) + " " + \
@@ -175,6 +176,12 @@ def main(options, flags):
 
     overwrite = gscript.overwrite()
 
+    if points and coordinates:
+        gscript.fatal(_("points and coordinates are mutually exclusive"))
+
+    if not points and not coordinates:
+        gscript.fatal(_("You must specify points or coordinates"))
+
     # Make sure the temporal database exists
     tgis.init()
     # We need a database interface
@@ -188,12 +195,6 @@ def main(options, flags):
 
     if not maps:
         gscript.fatal(_("Space time raster dataset <%s> is empty") % sp.get_id())
-
-    if points and coordinates:
-        gscript.fatal(_("points and coordinates are mutually exclusive"))
-
-    if not points and not coordinates:
-        gscript.fatal(_("You must specify points or coordinates"))
 
     # The list of sample points
     p_list = []
@@ -237,9 +238,6 @@ def main(options, flags):
     else:
         # Convert the coordinates into sample points
         coord_list = coordinates.split(",")
-        if len(coord_list)%2 != 0:
-            gscript.fatal(_("An even number of coordinate pairs is required"))
-
         use_cats = True
 
         count = 0
@@ -254,9 +252,6 @@ def main(options, flags):
             p_list.append(p)
             cat += 1
 
-    # Sorting the points by y-coordinate to make use of the single row cache and read direction
-    sorted_p_list = sorted(p_list, key=SamplePointComparisonY)
-
     if output:
         out_file = open(output, "w")
     else:
@@ -269,15 +264,18 @@ def main(options, flags):
         out_file.write("end_time")
         out_file.write(separator)
         count = 0
-        for p in sorted_p_list:
+        for p in p_list:
             count += 1
             if use_cats is True:
                 out_file.write(str(p.cat))
             else:
                 out_file.write(str(p.column))
-            if count != len(sorted_p_list):
+            if count != len(p_list):
                 out_file.write(separator)
         out_file.write("\n")
+
+    # Sorting the points by y-coordinate to make use of the single row cache and read direction
+    sorted_p_list = sorted(p_list, key=SamplePointComparisonY)
 
     # Sample the raster maps
     num = 0
@@ -304,15 +302,19 @@ def main(options, flags):
         # Open the raster layer after the region settings
         r.open("r")
 
-        # Sample the raster maps
-        count = 0
+        # Sample the raster maps with the sorted points
         for p in sorted_p_list:
+            p.value = r.get_value(point=p, region=region)
+
+        # Write the point values from the original list
+        count = 0
+        for p in p_list:
             count += 1
-            v = r.get_value(point=p, region=region)
-            out_file.write(str(v))
-            if count != len(sorted_p_list):
+            out_file.write(str(p.value))
+            if count != len(p_list):
                 out_file.write(separator)
         out_file.write("\n")
+
         r.close()
 
     out_file.close()
