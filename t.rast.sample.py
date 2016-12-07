@@ -25,7 +25,13 @@
 #%end
 
 #%option G_OPT_V_INPUT
+#% required: no
 #% key: points
+#%end
+
+#%option G_OPT_M_COORDS
+#% required: no
+#% description: Comma separated list of coordinates
 #%end
 
 #%option G_OPT_STRDS_INPUT
@@ -81,6 +87,11 @@ import grass.lib.vector as libvect
 import grass.lib.raster as librast
 import sys
 
+
+STR_RTYPE = {'CELL':librast.CELL_TYPE,
+             'FCELL':librast.FCELL_TYPE,
+             'DCELL':librast.DCELL_TYPE}
+
 class SamplePoint(object):
     def __init__(self, x, y, cat, column=None):
         self.x = x
@@ -92,13 +103,44 @@ class SamplePoint(object):
                str(self.y) + " " + \
                str(self.cat) + " " + \
                str(self.column)
+
     def coords(self):
         return (self.x, self.y)
 
+###############################################################################
 
-STR_RTYPE = {'CELL':librast.CELL_TYPE,
-             'FCELL':librast.FCELL_TYPE,
-             'DCELL':librast.DCELL_TYPE}
+
+class SamplePointComparisonY(object):
+    """This comparison key can be used to sort lists of SamplePoint
+       by Y coordinate
+
+        Example:
+
+        .. code-block:: python
+
+            # Sort the SamplePoint's in the list by Y coordinate
+            sorted_p_list = sorted(p_list, key=SamplePointComparisonY)
+    """
+    def __init__(self, obj, *args):
+        self.obj = obj
+
+    def __lt__(self, other):
+        return self.obj.y < other.obj.y
+
+    def __gt__(self, other):
+        return self.obj.y > other.obj.y
+
+    def __eq__(self, other):
+        return self.obj.y == other.obj.y
+
+    def __le__(self, other):
+        return self.obj.y <= other.obj.y
+
+    def __ge__(self, other):
+        return self.obj.y >= other.obj.y
+
+    def __ne__(self, other):
+        return self.obj.y != other.obj.y
 
 ############################################################################
 
@@ -112,6 +154,7 @@ def main(options, flags):
     order = options["order"]
     column = options["column"]
     separator = options["separator"]
+    coordinates = options["coordinates"]
 
     # Setup separator
     if separator == "pipe":
@@ -146,42 +189,72 @@ def main(options, flags):
     if not maps:
         gscript.fatal(_("Space time raster dataset <%s> is empty") % sp.get_id())
 
-    # Check if the chosen header column is in the vector map
-    vname = points
-    vmapset= ""
-    if "@" in points:
-        vname, vmapset = points.split("@")
+    if points and coordinates:
+        gscript.fatal(_("points and coordinates are mutually exclusive"))
 
-    v = pyvect.VectorTopo(vname, vmapset)
-    v.open("r")
+    if not points and not coordinates:
+        gscript.fatal(_("You must specify points or coordinates"))
 
-    col_index = 0
-
-    if v.exist() == False:
-        gscript.fatal(_("Vector map <%s> does not exist"%(points)))
-
-    if not v.table:
-        use_cats = True
-        gscript.warning(_("Vector map <%s> does not have an attribute table, using cats as header column."%(points)))
-
-    if v.table and column not in v.table.columns:
-        gscript.fatal(_("Vector map <%s> has no column named %s"%(points, column)))
-
+    # The list of sample points
     p_list = []
-    if use_cats is False:
-        col_index = v.table.columns.names().index(column)
 
-    # Create the point list
-    for line in v:
-        if line.gtype == libvect.GV_POINT:
-            if use_cats is False:
-                p = SamplePoint(line.x, line.y, line.cat, line.attrs.values()[col_index])
-            elif use_cats is True:
-                p = SamplePoint(line.x, line.y, line.cat)
+    if not coordinates:
+        # Check if the chosen header column is in the vector map
+        vname = points
+        vmapset= ""
+        if "@" in points:
+            vname, vmapset = points.split("@")
 
+        v = pyvect.VectorTopo(vname, vmapset)
+        v.open("r")
+
+        col_index = 0
+
+        if v.exist() == False:
+            gscript.fatal(_("Vector map <%s> does not exist"%(points)))
+
+        if not v.table:
+            use_cats = True
+            gscript.warning(_("Vector map <%s> does not have an attribute table, using cats as header column."%(points)))
+
+        if v.table and column not in v.table.columns:
+            gscript.fatal(_("Vector map <%s> has no column named %s"%(points, column)))
+
+        if use_cats is False:
+            col_index = v.table.columns.names().index(column)
+
+        # Create the point list
+        for line in v:
+            if line.gtype == libvect.GV_POINT:
+                if use_cats is False:
+                    p = SamplePoint(line.x, line.y, line.cat, line.attrs.values()[col_index])
+                elif use_cats is True:
+                    p = SamplePoint(line.x, line.y, line.cat)
+
+                p_list.append(p)
+
+        v.close()
+    else:
+        # Convert the cooridnates into sample points
+        coord_list = coordinates.split(",")
+        if len(coord_list)%2 != 0:
+            gscript.fatal(_("An even number of coordinate pairs is required"))
+
+        use_cats = True
+
+        count = 0
+        cat = 1
+        while count < len(coord_list):
+            x = coord_list[count]
+            count += 1
+            y = coord_list[count]
+            count += 1
+
+            p = SamplePoint(float(x), float(y), cat)
             p_list.append(p)
+            cat += 1
 
-    v.close()
+    sorted_p_list = sorted(p_list, key=SamplePointComparisonY)
 
     if output:
         out_file = open(output, "w")
@@ -195,13 +268,13 @@ def main(options, flags):
         out_file.write("end_time")
         out_file.write(separator)
         count = 0
-        for p in p_list:
+        for p in sorted_p_list:
             count += 1
             if use_cats is True:
                 out_file.write(str(p.cat))
             else:
                 out_file.write(str(p.column))
-            if count != len(p_list):
+            if count != len(sorted_p_list):
                 out_file.write(separator)
         out_file.write("\n")
 
@@ -232,11 +305,11 @@ def main(options, flags):
 
         # Sample the raster maps
         count = 0
-        for p in p_list:
+        for p in sorted_p_list:
             count += 1
             v = r.get_value(point=p, region=region)
             out_file.write(str(v))
-            if count != len(p_list):
+            if count != len(sorted_p_list):
                 out_file.write(separator)
         out_file.write("\n")
         r.close()
