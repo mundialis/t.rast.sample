@@ -235,7 +235,7 @@ def main(options, flags):
 
         v.close()
     else:
-        # Convert the cooridnates into sample points
+        # Convert the coordinates into sample points
         coord_list = coordinates.split(",")
         if len(coord_list)%2 != 0:
             gscript.fatal(_("An even number of coordinate pairs is required"))
@@ -254,6 +254,7 @@ def main(options, flags):
             p_list.append(p)
             cat += 1
 
+    # Sorting the points by y-coordinate to make use of the single row cache and read direction
     sorted_p_list = sorted(p_list, key=SamplePointComparisonY)
 
     if output:
