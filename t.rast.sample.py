@@ -83,6 +83,7 @@ import grass.temporal as tgis
 import grass.pygrass.vector as pyvect
 import grass.pygrass.vector.geometry as pygeom
 import grass.pygrass.raster as pyrast
+import grass.pygrass.gis.region as pyregion
 import grass.lib.vector as libvect
 import grass.lib.raster as librast
 import sys
@@ -298,7 +299,9 @@ def main(options, flags):
 
         region = None
         if use_raster_region is True:
-            region = r.set_region_from_rast()
+            r.set_region_from_rast()
+            region = pyregion.Region()
+            region.from_rast(map.get_name())
         # Open the raster layer after the region settings
         r.open("r")
 
