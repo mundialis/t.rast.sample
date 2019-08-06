@@ -223,7 +223,7 @@ def main(options, flags):
             gscript.fatal(_("Vector map <%s> has no column named %s"%(points, column)))
 
         if use_cats is False:
-            col_index = list(v.table.columns.names())[column]
+            col_index = list(v.table.columns.names()).index(column)
 
         # Create the point list
         for line in v:
