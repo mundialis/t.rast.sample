@@ -102,9 +102,9 @@ class SamplePoint(object):
         self.value = None
     def __str__(self):
         return str(self.x) + " " + \
-               str(self.y) + " " + \
-               str(self.cat) + " " + \
-               str(self.column)
+            str(self.y) + " " + \
+            str(self.cat) + " " + \
+            str(self.column)
 
     def coords(self):
         return (self.x, self.y)
