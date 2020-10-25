@@ -18,35 +18,35 @@ class TestRasterSample(TestCase):
         """Initiate GIS and set the region
         """
         cls.use_temp_region()
-        cls.runModule("g.region",  s=0,  n=80,  w=0,  e=120,  b=0,  t=50,  res=10,  res3=10)
+        cls.runModule("g.region", s=0, n=80, w=0, e=120, b=0, t=50, res=10, res3=10)
 
-        cls.runModule("r.mapcalc", expression="a_1 = 100 + col() + row()",  overwrite=True)
-        cls.runModule("r.mapcalc", expression="a_2 = 200 + col() + row()",  overwrite=True)
-        cls.runModule("r.mapcalc", expression="a_3 = 300 + col() + row()",  overwrite=True)
-        cls.runModule("r.mapcalc", expression="a_4 = 400 + col() + row()",  overwrite=True)
+        cls.runModule("r.mapcalc", expression="a_1 = 100 + col() + row()", overwrite=True)
+        cls.runModule("r.mapcalc", expression="a_2 = 200 + col() + row()", overwrite=True)
+        cls.runModule("r.mapcalc", expression="a_3 = 300 + col() + row()", overwrite=True)
+        cls.runModule("r.mapcalc", expression="a_4 = 400 + col() + row()", overwrite=True)
 
         cls.runModule("v.random", output="points", npoints=3, seed=1, overwrite=True)
         cls.runModule("v.out.ascii", input="points")
 
-        cls.runModule("t.create",  type="strds",  temporaltype="absolute",
-                                 output="A",  title="A test",  description="A test",
+        cls.runModule("t.create", type="strds", temporaltype="absolute",
+                                 output="A", title="A test", description="A test",
                                  overwrite=True)
-        cls.runModule("t.register",  flags="i",  type="raster",  input="A",
-                                     maps="a_1,a_2,a_3,a_4",  start="2001-01-01",
-                                     increment="3 months",  overwrite=True)
+        cls.runModule("t.register", flags="i", type="raster", input="A",
+                                     maps="a_1,a_2,a_3,a_4", start="2001-01-01",
+                                     increment="3 months", overwrite=True)
 
     @classmethod
     def tearDownClass(cls):
         """Remove the temporary region
         """
-        cls.runModule("t.remove",  flags="rf",  type="strds",
+        cls.runModule("t.remove", flags="rf", type="strds",
                                    inputs="A")
         cls.del_temp_region()
 
     def test_sampling(self):
         """Test the sampling
         """
-        self.assertModule("t.rast.sample",  points="points", strds="A",
+        self.assertModule("t.rast.sample", points="points", strds="A",
                           output="out.txt",
                           flags="n", overwrite=True)
 
@@ -62,7 +62,7 @@ class TestRasterSample(TestCase):
     def test_sampling_no_header(self):
         """Test the sampling
         """
-        self.assertModule("t.rast.sample",  points="points", strds="A",
+        self.assertModule("t.rast.sample", points="points", strds="A",
                           output="out.txt", overwrite=True)
 
         content = """2001-01-01 00:00:00|2001-04-01 00:00:00|117|112|111
@@ -76,8 +76,8 @@ class TestRasterSample(TestCase):
     def test_sampling_region(self):
         """Test the sampling
         """
-        self.runModule("g.region",  s=-10,  n=0,  w=-10,  e=0,  b=0,  t=50,  res=10,  res3=10)
-        self.assertModule("t.rast.sample",  points="points", strds="A",
+        self.runModule("g.region", s=-10, n=0, w=-10, e=0, b=0, t=50, res=10, res3=10)
+        self.assertModule("t.rast.sample", points="points", strds="A",
                           output="out.txt", flags="rn", overwrite=True)
 
         content = """start_time|end_time|1|2|3
@@ -93,7 +93,7 @@ class TestRasterSample(TestCase):
         """Test the sampling
         """
         # cls.runModule("g.region",  s=0,  n=80,  w=0,  e=120,  b=0,  t=50,  res=10,  res3=10)
-        self.runModule("g.region",  s=-10,  n=0,  w=-10,  e=0,  b=0,  t=50,  res=10,  res3=10)
+        self.runModule("g.region", s=-10, n=0, w=-10, e=0, b=0, t=50, res=10, res3=10)
         self.assertModule("t.rast.sample", coordinates=[5,75,15,65,115,5], strds="A",
                           output="out.txt", flags="rn", overwrite=True)
 
@@ -111,15 +111,15 @@ class TestRasterSampleFails(TestCase):
 
     def test_error_handling(self):
         # No vector map, no coords, no strds
-        self.assertModuleFail("t.rast.sample",  output="out.txt", overwrite=True)
+        self.assertModuleFail("t.rast.sample", output="out.txt", overwrite=True)
         # No vector map
-        self.assertModuleFail("t.rast.sample",  strds="A",
+        self.assertModuleFail("t.rast.sample", strds="A",
                               output="out.txt", overwrite=True)
         # Points and coordinates together
         self.assertModuleFail("t.rast.sample", points="points", coordinates=[5,75,15,65,115,5],
                               strds="A", output="out.txt", flags="rn", overwrite=True)
         # Wrong number of coordinates
-        self.assertModuleFail("t.rast.sample", coordinates=[5,75,15,65,115],  strds="A",
+        self.assertModuleFail("t.rast.sample", coordinates=[5,75,15,65,115], strds="A",
                               output="out.txt", flags="rn", overwrite=True)
 if __name__ == '__main__':
     from grass.gunittest.main import test
