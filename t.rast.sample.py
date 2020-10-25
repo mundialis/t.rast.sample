@@ -214,7 +214,7 @@ def main(options, flags):
 
         col_index = 0
 
-        if v.exist() == False:
+        if v.exist() is False:
             gscript.fatal(_("Vector map <%s> does not exist" %(points)))
 
         if not v.table:
@@ -296,7 +296,7 @@ def main(options, flags):
         out_file.write(separator)
 
         r = pyrast.RasterRow(map.get_name(), map.get_mapset())
-        if r.exist() == False:
+        if r.exist() is False:
             gscript.fatal(_("Raster map <%s> does not exist" %(map.get_id())))
 
         region = None
