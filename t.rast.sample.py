@@ -100,6 +100,7 @@ class SamplePoint(object):
         self.cat = cat
         self.column = column
         self.value = None
+
     def __str__(self):
         return str(self.x) + " " + \
             str(self.y) + " " + \
@@ -123,6 +124,7 @@ class SamplePointComparisonY(object):
             # Sort the SamplePoint's in the list by Y coordinate
             sorted_p_list = sorted(p_list, key=SamplePointComparisonY)
     """
+
     def __init__(self, obj, *args):
         self.obj = obj
 
