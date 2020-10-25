@@ -213,14 +213,14 @@ def main(options, flags):
         col_index = 0
 
         if v.exist() == False:
-            gscript.fatal(_("Vector map <%s> does not exist"%(points)))
+            gscript.fatal(_("Vector map <%s> does not exist" %(points)))
 
         if not v.table:
             use_cats = True
-            gscript.warning(_("Vector map <%s> does not have an attribute table, using cats as header column."%(points)))
+            gscript.warning(_("Vector map <%s> does not have an attribute table, using cats as header column." %(points)))
 
         if v.table and column not in v.table.columns:
-            gscript.fatal(_("Vector map <%s> has no column named %s"%(points, column)))
+            gscript.fatal(_("Vector map <%s> has no column named %s" %(points, column)))
 
         if use_cats is False:
             col_index = list(v.table.columns.names()).index(column)
@@ -282,7 +282,7 @@ def main(options, flags):
     num = 0
     for map in maps:
         num += 1
-        sys.stderr.write("Sample map <%s> number  %i out of %i\n"%(map.get_name(), num, len(maps)))
+        sys.stderr.write("Sample map <%s> number  %i out of %i\n" %(map.get_name(), num, len(maps)))
 
         start, end = map.get_temporal_extent_as_tuple()
         out_file.write(str(start))
@@ -295,7 +295,7 @@ def main(options, flags):
 
         r = pyrast.RasterRow(map.get_name(), map.get_mapset())
         if r.exist() == False:
-            gscript.fatal(_("Raster map <%s> does not exist"%(map.get_id())))
+            gscript.fatal(_("Raster map <%s> does not exist" %(map.get_id())))
 
         region = None
         if use_raster_region is True:
